@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tangible Interface Tisch – Prototype</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: white;
+      overflow: hidden;
+    }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .block {
+      display: inline-block;
+      padding: 6px 10px;
+      margin: 4px;
+      border-radius: 6px;
+      cursor: grab;
+      font-size: 14px;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<div id="ui">
+  <div class="block" draggable="true" data-type="sensor" style="background:#3498db">Sensor</div>
+  <div class="block" draggable="true" data-type="software" style="background:#2ecc71">Analyse</div>
+  <div class="block" draggable="true" data-type="machine" style="background:#e67e22">Maschine</div>
+  <div class="block" draggable="true" data-type="material" style="background:#9b59b6">Erz</div>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let nodes = [];
+
+// Drag & Drop
+const blocks = document.querySelectorAll('.block');
+blocks.forEach(block => {
+  block.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('type', block.dataset.type);
+  });
+});
+
+canvas.addEventListener('dragover', e => e.preventDefault());
+
+canvas.addEventListener('drop', e => {
+  const type = e.dataTransfer.getData('type');
+  nodes.push({
+    x: e.clientX,
+    y: e.clientY,
+    type
+  });
+  draw();
+});
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // draw connections
+  for (let i = 0; i < nodes.length; i++) {
+    for (let j = i + 1; j < nodes.length; j++) {
+      ctx.beginPath();
+      ctx.moveTo(nodes[i].x, nodes[i].y);
+      ctx.lineTo(nodes[j].x, nodes[j].y);
+      ctx.strokeStyle = "rgba(0,255,255,0.3)";
+      ctx.stroke();
+    }
+  }
+
+  // draw nodes
+  nodes.forEach(n => {
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, 25, 0, Math.PI * 2);
+
+    switch(n.type) {
+      case 'sensor': ctx.fillStyle = '#3498db'; break;
+      case 'software': ctx.fillStyle = '#2ecc71'; break;
+      case 'machine': ctx.fillStyle = '#e67e22'; break;
+      case 'material': ctx.fillStyle = '#9b59b6'; break;
+    }
+
+    ctx.fill();
+
+    ctx.fillStyle = "white";
+    ctx.font = "12px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText(n.type, n.x, n.y + 4);
+  });
+
+  checkSystem();
+}
+
+function checkSystem() {
+  const types = nodes.map(n => n.type);
+
+  if (types.includes('sensor') && types.includes('software') && types.includes('machine')) {
+    ctx.fillStyle = "#2ecc71";
+    ctx.font = "20px Arial";
+    ctx.fillText("✔ System funktioniert", 200, 50);
+  } else {
+    ctx.fillStyle = "#e74c3c";
+    ctx.font = "20px Arial";
+    ctx.fillText("⚠ Unvollständiges System", 220, 50);
+  }
+}
+
+// initial draw
+ draw();
+</script>
+
+</body>
+</html>
+
