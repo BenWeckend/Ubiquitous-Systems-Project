@@ -2,130 +2,168 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Tangible Interface Tisch – Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vernetzte Industrie Sachsen – Tangible Prototype</title>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: white;
       overflow: hidden;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top, #1c2b3a 0%, #0b0f14 70%);
+      color: white;
     }
-    #ui {
+
+    #sidebar {
       position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.6);
-      padding: 10px;
-      border-radius: 8px;
+      left: 20px;
+      top: 20px;
+      width: 280px;
+      background: rgba(10, 15, 20, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 18px;
+      padding: 18px;
+      z-index: 10;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
     }
-    .block {
-      display: inline-block;
-      padding: 6px 10px;
-      margin: 4px;
-      border-radius: 6px;
-      cursor: grab;
+
+    #sidebar h1 {
+      margin-top: 0;
+      font-size: 22px;
+      margin-bottom: 8px;
+    }
+
+    #sidebar p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.75);
+      line-height: 1.5;
+    }
+
+    .section-title {
+      margin-top: 20px;
+      margin-bottom: 10px;
       font-size: 14px;
+      text-transform: uppercase;
+      color: #7dd3fc;
+      letter-spacing: 1px;
     }
+
+    .block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 14px;
+      cursor: grab;
+      transition: 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+    }
+
+    .block:hover {
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.08);
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
     canvas {
       display: block;
+    }
+
+    #infoPanel {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 320px;
+      background: rgba(10,15,20,0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
+      z-index: 10;
+      box-shadow: 0 0 30px rgba(0,0,0,0.5);
+    }
+
+    #infoPanel h2 {
+      margin-top: 0;
+      color: #7dd3fc;
+    }
+
+    #systemStatus {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 16px 28px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(10px);
+      font-size: 18px;
+      border: 1px solid rgba(255,255,255,0.08);
     }
   </style>
 </head>
 <body>
 
-<div id="ui">
-  <div class="block" draggable="true" data-type="sensor" style="background:#3498db">Sensor</div>
-  <div class="block" draggable="true" data-type="software" style="background:#2ecc71">Analyse</div>
-  <div class="block" draggable="true" data-type="machine" style="background:#e67e22">Maschine</div>
-  <div class="block" draggable="true" data-type="material" style="background:#9b59b6">Erz</div>
+<div id="sidebar">
+  <h1>Vernetzte Industrie Sachsen</h1>
+  <p>
+    Kombiniere industrielle Komponenten aus Sachsen und visualisiere,
+    wie Rohstoffe, Sensorik, Datenanalyse und Maschinenbau miteinander
+    vernetzt sind.
+  </p>
+
+  <div class="section-title">Bausteine</div>
+
+  <div class="block" draggable="true" data-type="material">
+    <div class="dot" style="background:#a855f7"></div>
+    Erz / Rohstoff
+  </div>
+
+  <div class="block" draggable="true" data-type="sensor">
+    <div class="dot" style="background:#38bdf8"></div>
+    Sensorik
+  </div>
+
+  <div class="block" draggable="true" data-type="software">
+    <div class="dot" style="background:#22c55e"></div>
+    Datenanalyse
+  </div>
+
+  <div class="block" draggable="true" data-type="machine">
+    <div class="dot" style="background:#f97316"></div>
+    Maschinenbau
+  </div>
+</div>
+
+<div id="infoPanel">
+  <h2>System Informationen</h2>
+  <p id="details">
+    Ziehe Komponenten auf den Tisch, um industrielle Prozesse und
+    Zusammenhänge zwischen Unternehmen sichtbar zu machen.
+  </p>
+</div>
+
+<div id="systemStatus">
+  ⚠ Kein vollständiges Industriesystem
 </div>
 
 <canvas id="canvas"></canvas>
 
-<script>
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
 
-let nodes = [];
-
-// Drag & Drop
-const blocks = document.querySelectorAll('.block');
-blocks.forEach(block => {
-  block.addEventListener('dragstart', e => {
-    e.dataTransfer.setData('type', block.dataset.type);
-  });
-});
-
-canvas.addEventListener('dragover', e => e.preventDefault());
-
-canvas.addEventListener('drop', e => {
-  const type = e.dataTransfer.getData('type');
-  nodes.push({
-    x: e.clientX,
-    y: e.clientY,
-    type
-  });
-  draw();
-});
-
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // draw connections
-  for (let i = 0; i < nodes.length; i++) {
-    for (let j = i + 1; j < nodes.length; j++) {
-      ctx.beginPath();
-      ctx.moveTo(nodes[i].x, nodes[i].y);
-      ctx.lineTo(nodes[j].x, nodes[j].y);
-      ctx.strokeStyle = "rgba(0,255,255,0.3)";
-      ctx.stroke();
-    }
-  }
-
-  // draw nodes
-  nodes.forEach(n => {
-    ctx.beginPath();
-    ctx.arc(n.x, n.y, 25, 0, Math.PI * 2);
-
-    switch(n.type) {
-      case 'sensor': ctx.fillStyle = '#3498db'; break;
-      case 'software': ctx.fillStyle = '#2ecc71'; break;
-      case 'machine': ctx.fillStyle = '#e67e22'; break;
-      case 'material': ctx.fillStyle = '#9b59b6'; break;
-    }
-
-    ctx.fill();
-
-    ctx.fillStyle = "white";
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
-    ctx.fillText(n.type, n.x, n.y + 4);
-  });
-
-  checkSystem();
-}
-
-function checkSystem() {
-  const types = nodes.map(n => n.type);
-
-  if (types.includes('sensor') && types.includes('software') && types.includes('machine')) {
-    ctx.fillStyle = "#2ecc71";
-    ctx.font = "20px Arial";
-    ctx.fillText("✔ System funktioniert", 200, 50);
-  } else {
-    ctx.fillStyle = "#e74c3c";
-    ctx.font = "20px Arial";
-    ctx.fillText("⚠ Unvollständiges System", 220, 50);
-  }
-}
-
-// initial draw
- draw();
-</script>
+<script src="script.js"></script>
 
 </body>
 </html>
-
