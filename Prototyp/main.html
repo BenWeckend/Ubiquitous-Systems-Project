@@ -2,8 +2,8 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vernetzte Industrie Sachsen – Tangible Prototype</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Industrie Netzwerk Sachsen</title>
 
   <style>
     * {
@@ -19,38 +19,49 @@
       color: white;
     }
 
+    canvas {
+      display: block;
+    }
+
+    /* Sidebar */
+
     #sidebar {
       position: absolute;
       left: 20px;
       top: 20px;
-      width: 280px;
-      background: rgba(10, 15, 20, 0.85);
+      width: 290px;
+
+      background: rgba(10,15,20,0.85);
       backdrop-filter: blur(12px);
+
+      border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 18px;
-      padding: 18px;
+
+      padding: 20px;
       z-index: 10;
+
       box-shadow: 0 0 30px rgba(0,0,0,0.5);
     }
 
     #sidebar h1 {
       margin-top: 0;
-      font-size: 22px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
+      font-size: 24px;
     }
 
     #sidebar p {
-      font-size: 13px;
       color: rgba(255,255,255,0.75);
       line-height: 1.5;
+      font-size: 14px;
     }
 
     .section-title {
       margin-top: 20px;
-      margin-bottom: 10px;
-      font-size: 14px;
-      text-transform: uppercase;
+      margin-bottom: 12px;
+
       color: #7dd3fc;
+      font-size: 13px;
+      text-transform: uppercase;
       letter-spacing: 1px;
     }
 
@@ -58,18 +69,22 @@
       display: flex;
       align-items: center;
       gap: 10px;
+
       padding: 12px;
       margin-bottom: 10px;
+
       border-radius: 14px;
+
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+
       cursor: grab;
       transition: 0.2s ease;
-      border: 1px solid rgba(255,255,255,0.08);
-      background: rgba(255,255,255,0.04);
     }
 
     .block:hover {
-      transform: translateY(-2px);
       background: rgba(255,255,255,0.08);
+      transform: translateY(-2px);
     }
 
     .dot {
@@ -78,21 +93,25 @@
       border-radius: 50%;
     }
 
-    canvas {
-      display: block;
-    }
+    /* Info Panel */
 
     #infoPanel {
       position: absolute;
       right: 20px;
       top: 20px;
-      width: 320px;
+
+      width: 340px;
+
       background: rgba(10,15,20,0.85);
       backdrop-filter: blur(12px);
-      border-radius: 18px;
-      padding: 18px;
+
+      border-radius: 20px;
       border: 1px solid rgba(255,255,255,0.08);
+
+      padding: 20px;
+
       z-index: 10;
+
       box-shadow: 0 0 30px rgba(0,0,0,0.5);
     }
 
@@ -101,67 +120,121 @@
       color: #7dd3fc;
     }
 
+    #details {
+      color: rgba(255,255,255,0.85);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    /* Status */
+
     #systemStatus {
       position: absolute;
+
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%);
+
       padding: 16px 28px;
+
       border-radius: 18px;
+
       background: rgba(0,0,0,0.6);
       backdrop-filter: blur(10px);
-      font-size: 18px;
+
       border: 1px solid rgba(255,255,255,0.08);
+
+      font-size: 18px;
+      z-index: 10;
     }
+
   </style>
 </head>
 <body>
 
 <div id="sidebar">
-  <h1>Vernetzte Industrie Sachsen</h1>
+
+  <h1>Industrie Netzwerk Sachsen</h1>
+
   <p>
-    Kombiniere industrielle Komponenten aus Sachsen und visualisiere,
-    wie Rohstoffe, Sensorik, Datenanalyse und Maschinenbau miteinander
+    Entdecke wie Unternehmen aus Sachsen
+    in modernen Industrieprozessen miteinander
     vernetzt sind.
   </p>
 
-  <div class="section-title">Bausteine</div>
+  <div class="section-title">
+    Unternehmen
+  </div>
 
-  <div class="block" draggable="true" data-type="material">
+  <div class="block" draggable="true" data-type="bergbau">
     <div class="dot" style="background:#a855f7"></div>
-    Erz / Rohstoff
+    Bergbau Sachsen
   </div>
 
-  <div class="block" draggable="true" data-type="sensor">
+  <div class="block" draggable="true" data-type="gemac">
     <div class="dot" style="background:#38bdf8"></div>
-    Sensorik
+    GEMAC Chemnitz
   </div>
 
-  <div class="block" draggable="true" data-type="software">
+  <div class="block" draggable="true" data-type="flowlogix">
     <div class="dot" style="background:#22c55e"></div>
-    Datenanalyse
+    FlowLogiX
   </div>
 
-  <div class="block" draggable="true" data-type="machine">
+  <div class="block" draggable="true" data-type="xenon">
     <div class="dot" style="background:#f97316"></div>
-    Maschinenbau
+    XENON Automation
   </div>
+
+  <div class="block" draggable="true" data-type="sunfire">
+    <div class="dot" style="background:#eab308"></div>
+    Sunfire
+  </div>
+
+  <div class="block" draggable="true" data-type="i2s">
+  <div class="dot" style="background:#0ea5e9"></div>
+    i2S Dresden
+  </div>
+
+  <div class="block" draggable="true" data-type="micromac">
+    <div class="dot" style="background:#06b6d4"></div>
+    3D-Micromac AG
+  </div>
+
+  <div class="block" draggable="true" data-type="kontron">
+    <div class="dot" style="background:#10b981"></div>
+    Kontron AIS
+  </div>
+
+  <div class="block" draggable="true" data-type="wesoba">
+    <div class="dot" style="background:#f97316"></div>
+    WESOBA
+  </div>
+
+  <div class="block" draggable="true" data-type="siemens">
+    <div class="dot" style="background:#f59e0b"></div>
+    Siemens Energy
+  </div>
+
 </div>
 
 <div id="infoPanel">
+
   <h2>System Informationen</h2>
+
   <p id="details">
-    Ziehe Komponenten auf den Tisch, um industrielle Prozesse und
-    Zusammenhänge zwischen Unternehmen sichtbar zu machen.
+    Ziehe Unternehmen auf den Tisch,
+    um Beziehungen und Produktionsketten
+    sichtbar zu machen.
   </p>
+
 </div>
 
 <div id="systemStatus">
-  ⚠ Kein vollständiges Industriesystem
+  ⚠ Netzwerk unvollständig
 </div>
 
 <canvas id="canvas"></canvas>
-
 
 <script src="script.js"></script>
 
