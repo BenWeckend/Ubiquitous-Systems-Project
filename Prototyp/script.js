@@ -113,6 +113,17 @@ const relations = [
 ];
 
 let nodes = [];
+let draggingNode = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+
+function getNodeAtPosition(x, y) {
+  return nodes.find(node => {
+    const dx = node.x - x;
+    const dy = node.y - y;
+    return Math.sqrt(dx * dx + dy * dy) < 38;
+  });
+}
 
 const blocks = document.querySelectorAll('.block');
 
@@ -141,20 +152,30 @@ canvas.addEventListener('drop', e => {
 
 });
 
+canvas.addEventListener('mousedown', e => {
+  const clickedNode = getNodeAtPosition(e.clientX, e.clientY);
+  if (!clickedNode) return;
+  draggingNode = clickedNode;
+  dragOffsetX = clickedNode.x - e.clientX;
+  dragOffsetY = clickedNode.y - e.clientY;  
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!draggingNode) return;
+  draggingNode.x = e.clientX + dragOffsetX;
+  draggingNode.y = e.clientY + dragOffsetY;
+  draw();
+});
+
+canvas.addEventListener('mouseup', () => {
+  draggingNode = null;
+});
+
 canvas.addEventListener('click', e => {
-
-  const clickedNode = nodes.find(node => {
-
-    const dx = node.x - e.clientX;
-    const dy = node.y - e.clientY;
-
-    return Math.sqrt(dx **2 + dy **2) < 38;
-  });
-
-  if(clickedNode) {
+  const clickedNode = getNodeAtPosition(e.clientX, e.clientY);
+  if (clickedNode) {
     showInfo(clickedNode.type);
   }
-
 });
 
 function showInfo(type) {
