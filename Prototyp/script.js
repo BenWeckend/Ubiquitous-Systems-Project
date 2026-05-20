@@ -141,6 +141,22 @@ canvas.addEventListener('drop', e => {
 
 });
 
+canvas.addEventListener('click', e => {
+
+  const clickedNode = nodes.find(node => {
+
+    const dx = node.x - e.clientX;
+    const dy = node.y - e.clientY;
+
+    return Math.sqrt(dx **2 + dy **2) < 38;
+  });
+
+  if(clickedNode) {
+    showInfo(clickedNode.type);
+  }
+
+});
+
 function showInfo(type) {
 
   const company = companyInfo[type];
