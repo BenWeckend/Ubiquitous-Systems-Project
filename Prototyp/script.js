@@ -113,6 +113,18 @@ const relations = [
 ];
 
 let nodes = [];
+let draggingNode = null;
+let dragOffsetX = 0;
+let dragOffsetY = 0;
+let connectionOffset = 0;
+
+function getNodeAtPosition(x, y) {
+  return nodes.find(node => {
+    const dx = node.x - x;
+    const dy = node.y - y;
+    return Math.sqrt(dx * dx + dy * dy) < 38;
+  });
+}
 
 const blocks = document.querySelectorAll('.block');
 
@@ -139,6 +151,32 @@ canvas.addEventListener('drop', e => {
   showInfo(type);
   draw();
 
+});
+
+canvas.addEventListener('mousedown', e => {
+  const clickedNode = getNodeAtPosition(e.clientX, e.clientY);
+  if (!clickedNode) return;
+  draggingNode = clickedNode;
+  dragOffsetX = clickedNode.x - e.clientX;
+  dragOffsetY = clickedNode.y - e.clientY;  
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!draggingNode) return;
+  draggingNode.x = e.clientX + dragOffsetX;
+  draggingNode.y = e.clientY + dragOffsetY;
+  draw();
+});
+
+canvas.addEventListener('mouseup', () => {
+  draggingNode = null;
+});
+
+canvas.addEventListener('click', e => {
+  const clickedNode = getNodeAtPosition(e.clientX, e.clientY);
+  if (clickedNode) {
+    showInfo(clickedNode.type);
+  }
 });
 
 function showInfo(type) {
@@ -169,6 +207,7 @@ function getColor(type) {
 function drawGrid() {
 
   ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+  ctx.lineWidth = 1;
 
   for(let x = 0; x < canvas.width; x += 60) {
 
@@ -212,7 +251,10 @@ function drawConnections() {
 
       ctx.strokeStyle = gradient;
       ctx.lineWidth = 4;
+      ctx.setLineDash([20, 15]);
+      ctx.lineDashOffset = connectionOffset;
       ctx.stroke();
+      ctx.setLineDash([]);
 
       const midX = (a.x + b.x) / 2;
       const midY = (a.y + b.y) / 2;
@@ -325,7 +367,24 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
 
   draw();
-
+  
 });
+
+// animate dashed connections
+let lastTime = 0;
+function animate(time) {
+  // if (!lastTime) lastTime = time;
+  const dt = time - lastTime;
+  lastTime = time;
+
+  // speed in pixels per millisecond (tweak to adjust visual speed)
+  const speed = 0.05;
+  connectionOffset = (connectionOffset - dt * speed) % 35; 
+
+  draw();
+  requestAnimationFrame(animate);
+}
+
+requestAnimationFrame(animate);
 
 draw();
