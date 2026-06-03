@@ -80,7 +80,7 @@ canvas {
   right: 20px;
   top: 20px;
   width: 420px;          /* breiter als zuvor */
-  max-height: calc(100% - 40px);
+  max-height: calc(70% - 40px);
   background: rgba(10,15,20,0.9);
   backdrop-filter: blur(12px);
   border-radius: 24px;
@@ -201,4 +201,13 @@ canvas {
 #infoPanel::-webkit-scrollbar-thumb {
   background: #38bdf8;
   border-radius: 10px;
+}
+
+#map {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  width: 420px;
+  height: calc(30% - 40px);
+  border-radius: 12px;
 }

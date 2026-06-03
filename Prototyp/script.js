@@ -15,6 +15,8 @@ const companyInfo = {
     text: 'Liefert Erze, Metalle und Rohstoffe für die sächsische Industrie.',
     products: ['Eisenerz', 'Metalle (Kupfer, Zinn)', 'Industrieminerale'],
     logo: 'logos/Sachsen.png',
+    lat: 50.91516750977242,
+    lng: 13.345313731179036,
     color: '#a855f7'
   },
   gemac: {
@@ -296,6 +298,7 @@ canvas.addEventListener('drop', e => {
   const newNode = { x: e.clientX, y: e.clientY, type };
   nodes.push(newNode);
   showCompanyPopup(newNode);
+  addCompanyToMap(type);
   draw();
 });
 
@@ -324,6 +327,82 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
   draw();
 });
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: {
+    version: 8,
+    sources: {
+      osm: {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256
+      }
+    },
+    layers: [
+      {
+        id: "osm",
+        type: "raster",
+        source: "osm"
+      }
+    ]
+  },
+  center: [13.344060382241171, 50.92051370161715],
+  zoom: 14
+});
+
+const markers = new Map();
+
+// set museum as starting point and reference for all other markers
+const museumMarker = document.createElement('div');
+museumMarker.style.width = "15px";
+museumMarker.style.height = "15px";
+museumMarker.style.borderRadius = "50%";
+museumMarker.style.backgroundColor = 'red';
+museumMarker.style.border = "2px solid white";
+
+markers.set('museum', new maplibregl.Marker({element: museumMarker})
+  .setLngLat([13.344060382241171, 50.92051370161715])
+  .addTo(map)
+);
+
+function addCompanyToMap(type) {
+  const company = companyInfo[type];
+  const marker = new maplibregl.Marker()
+    .setLngLat([company.lng, company.lat])
+    .addTo(map);
+
+  markers.set(type, marker);
+
+  updateBounds();
+}
+
+function removeCompanyFromMap(type) {
+  const marker = markers.get(type);
+
+  if (marker) {
+    marker.remove();
+    markers.delete(type);
+  }
+
+  updateBounds();
+}
+
+function updateBounds() {
+  if (markers.size === 0) return;
+
+  const bounds = new maplibregl.LngLatBounds();
+
+  markers.forEach(marker => {
+    bounds.extend(marker.getLngLat());
+  });
+
+  map.fitBounds(bounds, {
+    padding: 50,
+    maxZoom: 14,
+    duration: 3000
+  });
+}
 
 let lastTime = 0;
 function animate(time) {
