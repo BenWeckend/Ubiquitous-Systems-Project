@@ -1,5 +1,6 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const sidebar = document.getElementById('sidebar');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -141,6 +142,14 @@ function getActiveConnections(nodeType, allNodes) {
     }
   });
   return connections;
+}
+
+function returnNodeToSidebar(node) {
+  const block = node.block;
+  nodes = nodes.filter(n => n !== node);
+  draw();
+  removeCompanyFromMap(node.type);
+  sidebar.appendChild(block);
 }
 
 // ======================= POPUP MIT GROSSEM LOGO =======================
@@ -299,7 +308,7 @@ canvas.addEventListener('drop', e => {
     `.block[data-type="${type}"]`
   );
   if(block) block.remove();
-  const newNode = { x: e.clientX, y: e.clientY, type };
+  const newNode = { x: e.clientX, y: e.clientY, type, block };
   nodes.push(newNode);
   showCompanyPopup(newNode);
   if(companyInfo[type].lat && companyInfo[type].lng ) addCompanyToMap(type);
@@ -323,6 +332,17 @@ canvas.addEventListener('mouseup', () => draggingNode = null);
 canvas.addEventListener('click', e => {
   const n = getNodeAtPosition(e.clientX, e.clientY);
   if(n) showCompanyPopup(n);
+});
+
+sidebar.addEventListener('mousemove', e => {
+  if(!draggingNode) return;
+  draggingNode.x = e.clientX + dragOffsetX;
+  draggingNode.y = e.clientY + dragOffsetY;
+  draw();
+});
+sidebar.addEventListener('mouseup', e => {
+  returnNodeToSidebar(draggingNode);
+  draggingNode = null;
 });
 
 // ======================= RESIZE & ANIMATION =======================
