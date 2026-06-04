@@ -298,7 +298,7 @@ canvas.addEventListener('drop', e => {
   const newNode = { x: e.clientX, y: e.clientY, type };
   nodes.push(newNode);
   showCompanyPopup(newNode);
-  addCompanyToMap(type);
+  if(companyInfo[type].lat && companyInfo[type].lng ) addCompanyToMap(type);
   draw();
 });
 
