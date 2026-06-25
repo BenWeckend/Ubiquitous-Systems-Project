@@ -1,5 +1,6 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
+const sidebar = document.getElementById('sidebar');
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
@@ -15,6 +16,8 @@ const companyInfo = {
     text: 'Liefert Erze, Metalle und Rohstoffe für die sächsische Industrie.',
     products: ['Eisenerz', 'Metalle (Kupfer, Zinn)', 'Industrieminerale'],
     logo: 'logos/Sachsen.png',
+    lat: 50.91516750977242,
+    lng: 13.345313731179036,
     color: '#a855f7'
   },
   gemac: {
@@ -23,6 +26,8 @@ const companyInfo = {
     text: 'Neigungssensoren und Diagnosesysteme für anspruchsvolle Umgebungen.',
     products: ['Neigungssensoren', 'IMUs', 'Feldbus-Diagnosesysteme'],
     logo: 'logos/gemac.png',
+    lat: 50.819362845694414,
+    lng: 12.8798128099855,
     color: '#38bdf8'
   },
   i2s: {
@@ -31,6 +36,8 @@ const companyInfo = {
     text: 'Intelligente industrielle Sensorsysteme für Echtzeit-Monitoring.',
     products: ['Smart Sensors', 'Datenvorverarbeitung', 'Industrielle Messtechnik'],
     logo: 'logos/i2s.png',
+    lat: 51.13232595628871,
+    lng: 13.781213869466878,
     color: '#0ea5e9'
   },
   micromac: {
@@ -112,8 +119,6 @@ const relations = [
 ];
 
 let nodes = [];
-let draggingNode = null;
-let dragOffsetX = 0, dragOffsetY = 0;
 let connectionOffset = 0;
 
 // ======================= HILFSFUNKTIONEN =======================
@@ -139,6 +144,14 @@ function getActiveConnections(nodeType, allNodes) {
     }
   });
   return connections;
+}
+
+function returnNodeToSidebar(node) {
+  const block = node.block;
+  nodes = nodes.filter(n => n !== node);
+  draw();
+  removeCompanyFromMap(node.type);
+  sidebar.appendChild(block);
 }
 
 // ======================= POPUP MIT GROSSEM LOGO =======================
@@ -284,38 +297,128 @@ function draw() {
   checkSystem();
 }
 
-// ======================= INTERAKTION =======================
-const blocks = document.querySelectorAll('.block');
-blocks.forEach(block => {
-  block.addEventListener('dragstart', e => e.dataTransfer.setData('type', block.dataset.type));
-});
+// ======================= INTERAKTION (Pointer Events) =======================
+// Pointer Events vereinheitlichen Maus, Touch und Stift in einer API.
+// Das ist Voraussetzung für Tablet/Handy/Touch-Laptop UND die spätere
+// Erkennung von physischen Objekten auf dem Tisch.
+//
+// activePointers: pointerId -> Zustand der jeweiligen Berührung.
+// Dadurch können mehrere Finger/Objekte gleichzeitig unabhängig agieren
+// (wichtig für einen Mehrpersonen-Tisch).
+const activePointers = new Map();
+const TAP_THRESHOLD_PX = 10; // Bewegung unterhalb dieses Werts gilt als "Tippen", nicht als Ziehen
 
-canvas.addEventListener('dragover', e => e.preventDefault());
-canvas.addEventListener('drop', e => {
-  const type = e.dataTransfer.getData('type');
-  const newNode = { x: e.clientX, y: e.clientY, type };
+function isOverSidebar(x, y) {
+  const r = sidebar.getBoundingClientRect();
+  return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+}
+
+function createGhost(type) {
+  const company = companyInfo[type];
+  const ghost = document.createElement('div');
+  ghost.className = 'drag-ghost';
+  ghost.innerHTML = `
+    <div class="dot" style="background:${company.color}"></div>
+    ${company.title}
+  `;
+  document.body.appendChild(ghost);
+  return ghost;
+}
+
+function moveGhost(ghost, x, y) {
+  ghost.style.left = x + 'px';
+  ghost.style.top = y + 'px';
+}
+
+// Zentrale Stelle, an der ein Unternehmen auf dem Tisch "ankommt".
+// Wird aktuell durch eine Touch-/Maus-Geste auf einen Sidebar-Block ausgelöst.
+// Später kann hier stattdessen die Objekterkennung (z.B. via TUIO/Kamera) andocken
+// und exakt dieselbe Funktion mit den erkannten Koordinaten aufrufen (block = null).
+function placeNode(type, x, y, block) {
+  if (block) block.remove();
+  const newNode = { x, y, type, block };
   nodes.push(newNode);
   showCompanyPopup(newNode);
+  if (companyInfo[type].lat && companyInfo[type].lng) addCompanyToMap(type);
+  draw();
+}
+
+// --- Aus der Sidebar ziehen (Block -> neuer Knoten auf dem Tisch) ---
+const blocks = document.querySelectorAll('.block');
+blocks.forEach(block => {
+  block.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    block.setPointerCapture(e.pointerId);
+    const type = block.dataset.type;
+    const ghost = createGhost(type);
+    moveGhost(ghost, e.clientX, e.clientY);
+    activePointers.set(e.pointerId, { mode: 'new', type, block, ghost });
+  });
+
+  block.addEventListener('pointermove', e => {
+    const p = activePointers.get(e.pointerId);
+    if (!p || p.mode !== 'new') return;
+    moveGhost(p.ghost, e.clientX, e.clientY);
+  });
+
+  block.addEventListener('pointerup', e => {
+    const p = activePointers.get(e.pointerId);
+    if (!p || p.mode !== 'new') return;
+    activePointers.delete(e.pointerId);
+    p.ghost.remove();
+    if (isOverSidebar(e.clientX, e.clientY)) return; // zurück in der Sidebar fallen gelassen
+    placeNode(p.type, e.clientX, e.clientY, p.block);
+  });
+
+  block.addEventListener('pointercancel', e => {
+    const p = activePointers.get(e.pointerId);
+    if (!p) return;
+    p.ghost.remove();
+    activePointers.delete(e.pointerId);
+  });
+});
+
+// --- Bestehende Knoten auf dem Tisch verschieben / antippen ---
+canvas.addEventListener('pointerdown', e => {
+  const n = getNodeAtPosition(e.clientX, e.clientY);
+  if (!n) return;
+  e.preventDefault();
+  canvas.setPointerCapture(e.pointerId);
+  activePointers.set(e.pointerId, {
+    mode: 'move',
+    node: n,
+    startX: e.clientX,
+    startY: e.clientY,
+    offsetX: n.x - e.clientX,
+    offsetY: n.y - e.clientY,
+    moved: false
+  });
+});
+
+canvas.addEventListener('pointermove', e => {
+  const p = activePointers.get(e.pointerId);
+  if (!p || p.mode !== 'move') return;
+  if (Math.hypot(e.clientX - p.startX, e.clientY - p.startY) > TAP_THRESHOLD_PX) {
+    p.moved = true;
+  }
+  p.node.x = e.clientX + p.offsetX;
+  p.node.y = e.clientY + p.offsetY;
   draw();
 });
 
-canvas.addEventListener('mousedown', e => {
-  const n = getNodeAtPosition(e.clientX, e.clientY);
-  if(!n) return;
-  draggingNode = n;
-  dragOffsetX = n.x - e.clientX;
-  dragOffsetY = n.y - e.clientY;
+canvas.addEventListener('pointerup', e => {
+  const p = activePointers.get(e.pointerId);
+  if (!p || p.mode !== 'move') return;
+  activePointers.delete(e.pointerId);
+  if (isOverSidebar(e.clientX, e.clientY)) {
+    returnNodeToSidebar(p.node);
+  } else if (!p.moved) {
+    showCompanyPopup(p.node); // reines Tippen ohne Bewegung -> Popup zeigen
+  }
 });
-canvas.addEventListener('mousemove', e => {
-  if(!draggingNode) return;
-  draggingNode.x = e.clientX + dragOffsetX;
-  draggingNode.y = e.clientY + dragOffsetY;
-  draw();
-});
-canvas.addEventListener('mouseup', () => draggingNode = null);
-canvas.addEventListener('click', e => {
-  const n = getNodeAtPosition(e.clientX, e.clientY);
-  if(n) showCompanyPopup(n);
+
+canvas.addEventListener('pointercancel', e => {
+  activePointers.delete(e.pointerId);
 });
 
 // ======================= RESIZE & ANIMATION =======================
@@ -324,6 +427,82 @@ window.addEventListener('resize', () => {
   canvas.height = window.innerHeight;
   draw();
 });
+
+const map = new maplibregl.Map({
+  container: "map",
+  style: {
+    version: 8,
+    sources: {
+      osm: {
+        type: "raster",
+        tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+        tileSize: 256
+      }
+    },
+    layers: [
+      {
+        id: "osm",
+        type: "raster",
+        source: "osm"
+      }
+    ]
+  },
+  center: [13.344060382241171, 50.92051370161715],
+  zoom: 14
+});
+
+const markers = new Map();
+
+// set museum as starting point and reference for all other markers
+const museumMarker = document.createElement('div');
+museumMarker.style.width = "15px";
+museumMarker.style.height = "15px";
+museumMarker.style.borderRadius = "50%";
+museumMarker.style.backgroundColor = 'red';
+museumMarker.style.border = "2px solid white";
+
+markers.set('museum', new maplibregl.Marker({element: museumMarker})
+  .setLngLat([13.344060382241171, 50.92051370161715])
+  .addTo(map)
+);
+
+function addCompanyToMap(type) {
+  const company = companyInfo[type];
+  const marker = new maplibregl.Marker()
+    .setLngLat([company.lng, company.lat])
+    .addTo(map);
+
+  markers.set(type, marker);
+
+  updateBounds();
+}
+
+function removeCompanyFromMap(type) {
+  const marker = markers.get(type);
+
+  if (marker) {
+    marker.remove();
+    markers.delete(type);
+  }
+
+  updateBounds();
+}
+
+function updateBounds() {
+  if (markers.size === 0) return;
+
+  const bounds = new maplibregl.LngLatBounds();
+
+  markers.forEach(marker => {
+    bounds.extend(marker.getLngLat());
+  });
+
+  map.fitBounds(bounds, {
+    padding: 50,
+    maxZoom: 14,
+    duration: 3000
+  });
+}
 
 let lastTime = 0;
 function animate(time) {
