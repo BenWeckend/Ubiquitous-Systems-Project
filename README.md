@@ -19,6 +19,6 @@ Durch das Platzieren und Kombinieren dieser Objekte entsteht ein vernetztes Syst
 
 *Ziel:* Das erstellen eines 2D Prototypen.
 
-*Aktueller Stand: 19.05.2026*
-<img width="1676" height="1719" alt="Bildschirmfoto vom 2026-05-19 18-56-00" src="https://github.com/user-attachments/assets/ea384a4c-0f91-4cf6-a947-56085483cc36" />
+*Aktueller Stand: 30.06.2026*
 
+<img width="1835" height="1206" alt="Bildschirmfoto vom 2026-06-30 18-16-20" src="https://github.com/user-attachments/assets/8bdeb26b-d997-4839-907f-071864ab2d94" />
