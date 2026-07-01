@@ -8,6 +8,7 @@ canvas.height = window.innerHeight;
 const info = document.getElementById('details');
 const status = document.getElementById('systemStatus');
 
+
 // ======================= ERWEITERTE FIRMENINFOS =======================
 const companyInfo = {
   bergbau: {
@@ -98,6 +99,8 @@ const companyInfo = {
   }
 };
 
+
+
 const relations = [
   ['bergbau', 'gemac', 'Materialüberwachung'],
   ['bergbau', 'i2s', 'Maschinendaten'],
@@ -120,6 +123,17 @@ const relations = [
 
 let nodes = [];
 let connectionOffset = 0;
+
+
+// ======================= SIDEBAR FÜLLEN =======================
+
+for (company in companyInfo) {
+  const newComp = document.createElement("div");
+  newComp.setAttribute("class", "block");
+  newComp.setAttribute("data-type", company);
+  newComp.innerHTML = `<div class="dot" style="background:${companyInfo[company]['color']}"></div>${companyInfo[company]['title']}</div>`;
+  sidebar.appendChild(newComp);
+};
 
 // ======================= HILFSFUNKTIONEN =======================
 function getNodeAtPosition(x, y) {
