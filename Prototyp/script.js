@@ -46,6 +46,8 @@ const companyInfo = {
     text: 'Lasersysteme und Sensorfertigung auf Mikroebene.',
     products: ['Laser-Mikrobearbeitung', 'Präzisionsanlagen', 'Sensorfertigung'],
     logo: 'logos/3dmicromac.png',
+    lat: 50.81740768957539, 
+    lng:12.924316322975217,
     color: '#06b6d4'
   },
   flowlogix: {
@@ -54,6 +56,8 @@ const companyInfo = {
     text: 'Digital Twins und KI-gestützte Produktionsanalyse.',
     products: ['Digital Twin Plattform', 'KI-Analyse Engine', 'Echtzeit-Dashboard'],
     logo: 'logos/flowlogix.png',
+    lat: 51.033688283815216, 
+    lng: 13.709849549253274,
     color: '#22c55e'
   },
   kontron: {
@@ -62,6 +66,8 @@ const companyInfo = {
     text: 'Verarbeitung industrieller Sensordaten am Edge.',
     products: ['Edge Gateways', 'Industrie-PCs', 'Datenlogger'],
     logo: 'logos/kontron.png',
+    lat: 51.01408829230804, 
+    lng: 13.79251488887925,
     color: '#10b981'
   },
   wesoba: {
@@ -70,6 +76,8 @@ const companyInfo = {
     text: 'Robotik und Sondermaschinen für die Automobil- und Elektroindustrie.',
     products: ['Roboterzellen', 'Sondermaschinen', 'Automatisierungslösungen'],
     logo: 'logos/wesoba.png',
+    lat: 50.546730300779956, 
+    lng: 12.767728047266658,
     color: '#f97316'
   },
   xenon: {
@@ -78,6 +86,8 @@ const companyInfo = {
     text: 'Automatisierungsanlagen und Steuerungssysteme für intelligente Fabriken.',
     products: ['Steuerungssysteme', 'Robotik-Integration', 'Produktionsanlagen'],
     logo: 'logos/xenon.png',
+    lat: 51.00828836701477, 
+    lng: 13.70062462372067,
     color: '#fb923c'
   },
   siemens: {
@@ -86,6 +96,8 @@ const companyInfo = {
     text: 'Turbinen, Netzleittechnik und Energiemanagement für die Industrie.',
     products: ['Gasturbinen', 'Netzleittechnik', 'Energiemanagement-Systeme'],
     logo: 'logos/siemens.png',
+    lat: 51.07614285164598, 
+    lng: 13.689026956237681,
     color: '#f59e0b'
   },
   sunfire: {
@@ -94,6 +106,8 @@ const companyInfo = {
     text: 'Nachhaltige Energieversorgung durch Elektrolyseure und Brennstoffzellen.',
     products: ['Elektrolyseure', 'Brennstoffzellen', 'Power-to-X Anlagen'],
     logo: 'logos/sunfire.png',
+    lat: 51.02752822225472, 
+    lng: 13.787155303279738,
     color: '#eab308'
   }
 };
