@@ -295,8 +295,8 @@ canvas {
 
 .tutorial-card {
   position: absolute;
-  top: 120px;
-  right: 460px;
+  top: 10%;
+  right: 50%;
   width: 340px;
   padding: 18px 20px;
   border-radius: 24px;

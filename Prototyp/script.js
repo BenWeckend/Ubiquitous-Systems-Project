@@ -307,6 +307,7 @@ const tutorialCtx = tutorialCanvas.getContext('2d');
 let idleTimer = null;
 let tutorialActive = false;
 let tutorialCancel = false;
+let tutorialDrawConnections = false;
 let tutorialNodes = [];
 
 function resizeTutorialCanvas() {
@@ -336,31 +337,35 @@ function createTutorialNode(type, x, y) {
 
 function drawTutorial() {
   tutorialCtx.clearRect(0, 0, tutorialCanvas.width, tutorialCanvas.height);
-  if (tutorialNodes.length < 2) return;
+  if (tutorialNodes.length < 1) return;
 
   const a = tutorialNodes[0];
-  const b = tutorialNodes[1];
-  const grad = tutorialCtx.createLinearGradient(a.x, a.y, b.x, b.y);
-  grad.addColorStop(0, a.color);
-  grad.addColorStop(1, b.color);
+  let b;
+  if (tutorialNodes.length > 1) b = tutorialNodes[1];
 
-  tutorialCtx.save();
-  tutorialCtx.strokeStyle = grad;
-  tutorialCtx.lineWidth = 4;
-  tutorialCtx.setLineDash([20, 15]);
-  tutorialCtx.lineDashOffset = -connectionOffset;
-  tutorialCtx.beginPath();
-  tutorialCtx.moveTo(a.x, a.y);
-  tutorialCtx.lineTo(b.x, b.y);
-  tutorialCtx.stroke();
-  tutorialCtx.restore();
+  if (tutorialDrawConnections) {
+    const grad = tutorialCtx.createLinearGradient(a.x, a.y, b.x, b.y);
+    grad.addColorStop(0, a.color);
+    grad.addColorStop(1, b.color);
 
-  const midX = (a.x + b.x) / 2;
-  const midY = (a.y + b.y) / 2;
-  tutorialCtx.fillStyle = 'rgba(255,255,255,0.9)';
-  tutorialCtx.font = '12px Arial';
-  tutorialCtx.textAlign = 'center';
-  tutorialCtx.fillText(relations.find(rel => (rel[0] === a.type && rel[1] === b.type) || (rel[0] === b.type && rel[1] === a.type))[2], midX, midY - 10);
+    tutorialCtx.save();
+    tutorialCtx.strokeStyle = grad;
+    tutorialCtx.lineWidth = 4;
+    tutorialCtx.setLineDash([20, 15]);
+    tutorialCtx.lineDashOffset = -connectionOffset;
+    tutorialCtx.beginPath();
+    tutorialCtx.moveTo(a.x, a.y);
+    tutorialCtx.lineTo(b.x, b.y);
+    tutorialCtx.stroke();
+    tutorialCtx.restore();
+
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    tutorialCtx.fillStyle = 'rgba(255,255,255,0.9)';
+    tutorialCtx.font = '12px Arial';
+    tutorialCtx.textAlign = 'center';
+    tutorialCtx.fillText(relations.find(rel => (rel[0] === a.type && rel[1] === b.type) || (rel[0] === b.type && rel[1] === a.type))[2], midX, midY - 10);
+  }
 
   tutorialNodes.forEach(node => {
     tutorialCtx.save();
@@ -417,11 +422,13 @@ function stopTutorial() {
   tutorialOverlay.classList.remove('visible');
   clearTutorialElements();
   tutorialCancel = false;
+  tutorialDrawConnections = false;
 }
 
 function scheduleIdleAnimation() {
   if (idleTimer) clearTimeout(idleTimer);
-  idleTimer = setTimeout(startTutorial, 60000);
+  // if (nodes.length > 0) return; // keine Animation, wenn bereits Knoten auf dem Tisch sind
+  idleTimer = setTimeout(startTutorial, 6000);
 }
 
 async function startTutorial() {
@@ -437,36 +444,47 @@ async function startTutorial() {
 
   tutorialNodes = [
     createTutorialNode('bergbau', startA.x, startA.y),
-    createTutorialNode('gemac', startB.x, startB.y)
+    // createTutorialNode('gemac', startB.x, startB.y)
   ];
   drawTutorial();
 
-  await sleep(300);
+  await sleep(1000);
   if (tutorialCancel) return stopTutorial();
 
   await moveTutorialNode(tutorialNodes[0], targetA.x, targetA.y, 900);
   tutorialStep.textContent = 'Ziehe ein zweites Unternehmen dazu.';
+
+  tutorialNodes.push(createTutorialNode('gemac', startB.x, startB.y));
+  drawTutorial();
+  
+  await sleep(1000);
   if (tutorialCancel) return stopTutorial();
 
-  await sleep(200);
   await moveTutorialNode(tutorialNodes[1], targetB.x, targetB.y, 900);
+
   tutorialStep.textContent = 'Sie verbinden sich automatisch.';
+  tutorialDrawConnections = true;
+  drawTutorial();
+  
   if (tutorialCancel) return stopTutorial();
 
-  await sleep(1300);
+  await sleep(2000);
   if (tutorialCancel) return stopTutorial();
 
   tutorialStep.textContent = 'Ziehe die Unternehmen zurück in die Sidebar, um sie zu entfernen.';
-  await sleep(300);
+  await sleep(1000);
   if (tutorialCancel) return stopTutorial();
 
-  await Promise.all([
-    moveTutorialNode(tutorialNodes[0], startA.x, startA.y, 900),
-    moveTutorialNode(tutorialNodes[1], startB.x, startB.y, 900)
-  ]);
-  await sleep(250);
+  
+  await moveTutorialNode(tutorialNodes[0], startA.x, startA.y, 900);
+  tutorialNodes = [tutorialNodes[1]];
+  tutorialDrawConnections = false;
+  drawTutorial();
+
+  await sleep(1000);
   if (tutorialCancel) return stopTutorial();
 
+  await moveTutorialNode(tutorialNodes[0], startB.x, startB.y, 900)
   stopTutorial();
 }
 
@@ -475,7 +493,7 @@ function sleep(ms) {
 }
 
 function quickCancelTutorial() {
-  if (tutorialActive) stopTutorial();
+  stopTutorial();
   scheduleIdleAnimation();
 }
 
