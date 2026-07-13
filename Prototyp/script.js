@@ -325,6 +325,217 @@ function draw() {
   checkSystem();
 }
 
+// ======================= IDLE TUTORIAL ANIMATION =======================
+const tutorialOverlay = document.getElementById('tutorialOverlay');
+const tutorialStep = tutorialOverlay.querySelector('.tutorial-step');
+const tutorialCanvas = document.getElementById('tutorialCanvas');
+const tutorialButton = document.getElementById('tutorialButton');
+const tutorialCtx = tutorialCanvas.getContext('2d');
+
+let idleTimer = null;
+let tutorialActive = false;
+let tutorialCancel = false;
+let tutorialDrawConnections = false;
+let tutorialNodes = [];
+
+function resizeTutorialCanvas() {
+  tutorialCanvas.width = window.innerWidth;
+  tutorialCanvas.height = window.innerHeight;
+}
+
+resizeTutorialCanvas();
+
+function getBlockCenter(type) {
+  const block = document.querySelector(`.block[data-type="${type}"]`);
+  if (!block) return { x: sidebar.getBoundingClientRect().left + 80, y: sidebar.getBoundingClientRect().top + 80 };
+  const rect = block.getBoundingClientRect();
+  return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+}
+
+function createTutorialNode(type, x, y) {
+  return {
+    type,
+    x,
+    y,
+    radius: 38,
+    color: companyInfo[type].color,
+    title: companyInfo[type].title
+  };
+}
+
+function drawTutorial() {
+  tutorialCtx.clearRect(0, 0, tutorialCanvas.width, tutorialCanvas.height);
+  if (tutorialNodes.length < 1) return;
+
+  const a = tutorialNodes[0];
+  let b;
+  if (tutorialNodes.length > 1) b = tutorialNodes[1];
+
+  if (tutorialDrawConnections) {
+    const grad = tutorialCtx.createLinearGradient(a.x, a.y, b.x, b.y);
+    grad.addColorStop(0, a.color);
+    grad.addColorStop(1, b.color);
+
+    tutorialCtx.save();
+    tutorialCtx.strokeStyle = grad;
+    tutorialCtx.lineWidth = 4;
+    tutorialCtx.setLineDash([20, 15]);
+    tutorialCtx.lineDashOffset = -connectionOffset;
+    tutorialCtx.beginPath();
+    tutorialCtx.moveTo(a.x, a.y);
+    tutorialCtx.lineTo(b.x, b.y);
+    tutorialCtx.stroke();
+    tutorialCtx.restore();
+
+    const midX = (a.x + b.x) / 2;
+    const midY = (a.y + b.y) / 2;
+    tutorialCtx.fillStyle = 'rgba(255,255,255,0.9)';
+    tutorialCtx.font = '12px Arial';
+    tutorialCtx.textAlign = 'center';
+    tutorialCtx.fillText(relations.find(rel => (rel[0] === a.type && rel[1] === b.type) || (rel[0] === b.type && rel[1] === a.type))[2], midX, midY - 10);
+  }
+
+  tutorialNodes.forEach(node => {
+    tutorialCtx.save();
+    tutorialCtx.globalAlpha = 0.55;
+    tutorialCtx.beginPath();
+    tutorialCtx.arc(node.x, node.y, node.radius, 0, Math.PI * 2);
+    tutorialCtx.fillStyle = node.color;
+    tutorialCtx.shadowColor = node.color;
+    tutorialCtx.shadowBlur = 25;
+    tutorialCtx.fill();
+    tutorialCtx.restore();
+
+    tutorialCtx.fillStyle = 'white';
+    tutorialCtx.font = 'bold 11px Arial';
+    tutorialCtx.textAlign = 'center';
+    tutorialCtx.fillText(node.title.split(' ')[0], node.x, node.y + 4);
+  });
+}
+
+function moveTutorialNode(node, targetX, targetY, duration) {
+  return new Promise(resolve => {
+    const startX = node.x;
+    const startY = node.y;
+    const deltaX = targetX - startX;
+    const deltaY = targetY - startY;
+    const startTime = performance.now();
+
+    function step(now) {
+      if (tutorialCancel) return resolve(false);
+      const progress = Math.min(1, (now - startTime) / duration);
+      node.x = startX + deltaX * progress;
+      node.y = startY + deltaY * progress;
+      drawTutorial();
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        resolve(true);
+      }
+    }
+
+    requestAnimationFrame(step);
+  });
+}
+
+function clearTutorialElements() {
+  tutorialNodes = [];
+  tutorialCtx.clearRect(0, 0, tutorialCanvas.width, tutorialCanvas.height);
+}
+
+function stopTutorial() {
+  if (!tutorialActive) return;
+  tutorialCancel = true;
+  tutorialActive = false;
+  tutorialOverlay.classList.remove('visible');
+  clearTutorialElements();
+  tutorialCancel = false;
+  tutorialDrawConnections = false;
+}
+
+function scheduleIdleAnimation() {
+  if (idleTimer) clearTimeout(idleTimer);
+  // if (nodes.length > 0) return; // keine Animation, wenn bereits Knoten auf dem Tisch sind
+  idleTimer = setTimeout(startTutorial, 6000);
+}
+
+async function startTutorial() {
+  if (tutorialActive) return;
+  tutorialActive = true;
+  tutorialOverlay.classList.add('visible');
+  tutorialStep.textContent = 'Ziehe ein Unternehmen in den Arbeitsbereich.';
+
+  const startA = getBlockCenter('bergbau');
+  const startB = getBlockCenter('gemac');
+  const targetA = { x: window.innerWidth * 0.32, y: window.innerHeight * 0.45 };
+  const targetB = { x: window.innerWidth * 0.62, y: window.innerHeight * 0.38 };
+
+  tutorialNodes = [
+    createTutorialNode('bergbau', startA.x, startA.y),
+    // createTutorialNode('gemac', startB.x, startB.y)
+  ];
+  drawTutorial();
+
+  await sleep(1000);
+  if (tutorialCancel) return stopTutorial();
+
+  await moveTutorialNode(tutorialNodes[0], targetA.x, targetA.y, 900);
+  tutorialStep.textContent = 'Ziehe ein zweites Unternehmen dazu.';
+
+  tutorialNodes.push(createTutorialNode('gemac', startB.x, startB.y));
+  drawTutorial();
+  
+  await sleep(1000);
+  if (tutorialCancel) return stopTutorial();
+
+  await moveTutorialNode(tutorialNodes[1], targetB.x, targetB.y, 900);
+
+  tutorialStep.textContent = 'Sie verbinden sich automatisch.';
+  tutorialDrawConnections = true;
+  drawTutorial();
+  
+  if (tutorialCancel) return stopTutorial();
+
+  await sleep(2000);
+  if (tutorialCancel) return stopTutorial();
+
+  tutorialStep.textContent = 'Ziehe die Unternehmen zurück in die Sidebar, um sie zu entfernen.';
+  await sleep(1000);
+  if (tutorialCancel) return stopTutorial();
+
+  
+  await moveTutorialNode(tutorialNodes[0], startA.x, startA.y, 900);
+  tutorialNodes = [tutorialNodes[1]];
+  tutorialDrawConnections = false;
+  drawTutorial();
+
+  await sleep(1000);
+  if (tutorialCancel) return stopTutorial();
+
+  await moveTutorialNode(tutorialNodes[0], startB.x, startB.y, 900)
+  stopTutorial();
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function quickCancelTutorial() {
+  stopTutorial();
+  scheduleIdleAnimation();
+}
+
+['pointermove', 'pointerdown', 'pointerup'].forEach(evt => {
+  window.addEventListener(evt, quickCancelTutorial, { passive: true });
+});
+
+tutorialButton.addEventListener('click', () => {
+  stopTutorial();
+  startTutorial();
+});
+
+scheduleIdleAnimation();
+
 // ======================= INTERAKTION (Pointer Events) =======================
 // Pointer Events vereinheitlichen Maus, Touch und Stift in einer API.
 // Das ist Voraussetzung für Tablet/Handy/Touch-Laptop UND die spätere
@@ -453,7 +664,9 @@ canvas.addEventListener('pointercancel', e => {
 window.addEventListener('resize', () => {
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
+  resizeTutorialCanvas();
   draw();
+  if (tutorialActive) drawTutorial();
 });
 
 const map = new maplibregl.Map({
