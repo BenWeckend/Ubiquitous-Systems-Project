@@ -456,7 +456,7 @@ function stopTutorial() {
 function scheduleIdleAnimation() {
   if (idleTimer) clearTimeout(idleTimer);
   // if (nodes.length > 0) return; // keine Animation, wenn bereits Knoten auf dem Tisch sind
-  idleTimer = setTimeout(startTutorial, 6000);
+  idleTimer = setTimeout(startTutorial, 300000);
 }
 
 async function startTutorial() {
